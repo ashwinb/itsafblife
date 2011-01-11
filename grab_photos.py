@@ -6,6 +6,7 @@ import facebook
 import os
 
 access_token = os.getenv('ACCESS_TOKEN')
+print access_token
 
 def grab_photos():
   graph = facebook.GraphAPI(access_token)
@@ -24,6 +25,10 @@ def grab_photos():
     id = str(like_info['name'])
     photo = photo_objs[id]
     photo.setNumLikes(num_likes)
+
+  for id in photo_objs:
+    print 'Saving %s.jpg...' % id
+    urllib.urlretrieve(photo_objs[id].getSource(), '%s.jpg' % id)
 
   #photo_objs contains the photos
 
