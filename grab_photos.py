@@ -4,12 +4,17 @@ import commands
 import urllib
 import json
 import facebook
+import math
 import os
+import string
 import shutil
+import feed.date.rfc3339
 
 access_token = os.getenv('ACCESS_TOKEN')
 graph = facebook.GraphAPI(access_token)
 user_id = graph.get_object("me")['id']
+songlength = commands.getoutput('mp3info -p "%%S" %s' % 'green_day.mp3')
+num_photos = int(math.floor(string.atoi(songlength) * .4))
 
 download = True
 #download = False # so we don't have to re-download photos
@@ -45,6 +50,8 @@ def grab_photos():
 
   photo_objs = photo_objs.values()
   photo_objs.sort(compareScores)
+  photo_objs = photo_objs[:num_photos]
+  photo_objs.sort(compareTimes)
 
   i = 0
   for photo in photo_objs:
@@ -55,10 +62,14 @@ def grab_photos():
 def compareScores(photo_a, photo_b):
   return photo_b.getScore() - photo_a.getScore()
 
+def compareTimes(photo_a, photo_b):
+  return photo_a.getTime() - photo_b.getTime()
+
 def fql(queries):
-  req_url = 'https://api.facebook.com/method/fql.multiquery?format=json&queries=' + urllib.quote(json.dumps(queries)) + '&access_token=' + access_token
-  file = urllib.urlopen(req_url)
-  return json.load(file)
+  req_url = 'https://api.facebook.com/method/fql.multiquery'
+  params = {'format' : 'json', 'queries' : json.dumps(queries), 'access_token' : access_token}
+  file = urllib.urlopen(req_url, urllib.urlencode(params))
+  return json.loads(file.read())
 
 class Photo:
   def __init__(self, data):
@@ -88,4 +99,6 @@ class Photo:
   def getLink(self):
     return self.data['link']
 
+  def getTime(self):
+    return int(feed.date.rfc3339.tf_from_timestamp(self.data['created_time']))
 main()

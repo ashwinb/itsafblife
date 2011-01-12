@@ -10,7 +10,9 @@ for img in *.jpg
   do convert $img -resize 720x480 -background black -gravity center -extent 720x480 $img
 done
 
-mencoder mf://*.jpg \
+ls *.jpg | sort -n > files.txt
+
+mencoder mf://@files.txt \
 -mf w=720:h=480:fps=.4:type=jpeg \
 -audiofile ${SOUNDFILE} \
 -ovc lavc \
