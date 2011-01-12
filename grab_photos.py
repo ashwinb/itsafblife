@@ -11,7 +11,8 @@ access_token = os.getenv('ACCESS_TOKEN')
 graph = facebook.GraphAPI(access_token)
 user_id = graph.get_object("me")['id']
 
-download = True # so we don't have to re-download photos
+download = True
+#download = False # so we don't have to re-download photos
 
 def main():
   if download:
