@@ -1,15 +1,31 @@
 #!/usr/bin/env python
 
+import commands
 import urllib
 import json
 import facebook
 import os
+import shutil
 
 access_token = os.getenv('ACCESS_TOKEN')
-print access_token
+graph = facebook.GraphAPI(access_token)
+user_id = graph.get_object("me")['id']
+
+download = True # so we don't have to re-download photos
+
+def main():
+  if download:
+    grab_photos()
+
+  print commands.getstatusoutput('./cmd.sh %s' % user_id)
 
 def grab_photos():
-  graph = facebook.GraphAPI(access_token)
+  if os.path.exists(user_id):
+    shutil.rmtree(user_id)
+
+  # make a directory for user's photos
+  os.mkdir(user_id)
+
   data = graph.get_connections("me", "photos")
   photos = data['data']
   photo_objs = {}
@@ -28,9 +44,7 @@ def grab_photos():
 
   for id in photo_objs:
     print 'Saving %s.jpg...' % id
-    urllib.urlretrieve(photo_objs[id].getSource(), '%s.jpg' % id)
-
-  #photo_objs contains the photos
+    urllib.urlretrieve(photo_objs[id].getSource(), '%s/%s.jpg' % (user_id, id))
 
 def fql(queries):
   req_url = 'https://api.facebook.com/method/fql.multiquery?format=json&queries=' + urllib.quote(json.dumps(queries)) + '&access_token=' + access_token
@@ -59,4 +73,4 @@ class Photo:
   def getNumLikes(self):
     return self.numLikes
 
-grab_photos()
+main()
