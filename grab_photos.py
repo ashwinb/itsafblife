@@ -27,7 +27,7 @@ def grab_photos():
   # make a directory for user's photos
   os.mkdir(user_id)
 
-  data = graph.get_connections("me", "photos")
+  data = graph.get_connections("me", "photos", limit=10000)
   photos = data['data']
   photo_objs = {}
   queries = {}
@@ -43,9 +43,17 @@ def grab_photos():
     photo = photo_objs[id]
     photo.setNumLikes(num_likes)
 
-  for id in photo_objs:
-    print 'Saving %s.jpg...' % id
-    urllib.urlretrieve(photo_objs[id].getSource(), '%s/%s.jpg' % (user_id, id))
+  photo_objs = photo_objs.values()
+  photo_objs.sort(compareScores)
+
+  i = 0
+  for photo in photo_objs:
+    i = i + 1
+    print photo.getLink()
+    urllib.urlretrieve(photo.getSource(), '%s/%s.jpg' % (user_id, str(i)))
+
+def compareScores(photo_a, photo_b):
+  return photo_b.getScore() - photo_a.getScore()
 
 def fql(queries):
   req_url = 'https://api.facebook.com/method/fql.multiquery?format=json&queries=' + urllib.quote(json.dumps(queries)) + '&access_token=' + access_token
@@ -73,5 +81,11 @@ class Photo:
 
   def getNumLikes(self):
     return self.numLikes
+
+  def getScore(self):
+    return self.getNumComments() + self.getNumLikes()
+
+  def getLink(self):
+    return self.data['link']
 
 main()
