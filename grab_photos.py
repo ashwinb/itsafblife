@@ -8,6 +8,7 @@ import facebook
 import math
 import pickle
 import os
+import random
 import string
 import shutil
 import feed.date.rfc3339
@@ -155,7 +156,7 @@ def compareScores(photo_a, photo_b):
 
   # old pictures don't have comments nor likes, do this to pick photos
   # from same album less often
-  if score_a == score_b
+  if score_a == score_b:
     random.randint(-1,1)
   return score_b - score_a
 
