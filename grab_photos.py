@@ -10,10 +10,11 @@ import pickle
 import os
 import random
 import string
+import sys
 import shutil
 import feed.date.rfc3339
 
-access_token = os.getenv('ACCESS_TOKEN')
+access_token = sys.argv[1]#os.getenv('ACCESS_TOKEN')
 graph = facebook.GraphAPI(access_token)
 user_id = graph.get_object("me")['id']
 songlength = commands.getoutput('mp3info -p "%%S" %s' % 'green_day.mp3')

@@ -1,0 +1,7 @@
+I wish to donate xe and the PyFeed modules to the Python Software
+Foundation.  I have released these modules under the BSD license, but I
+would be happy to license the modules to the PSF under another license
+(such as the Academic Freedom License) if that would help in any way.
+
+--Steve R. Hastings
+steve@hastings.org

@@ -1,0 +1,5 @@
+* add a .fullurl() method to Link(), etc. that walks upward through nest
+  levels, finds xml:base, resolves relative URL, and returns absolute URL
+
+* add XML namespace support: if a is the Atom space, recognize <a:feed>
+  (I will add it to xe first, and then make the changes in PyFeed.)
