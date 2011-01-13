@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import commands
+import datetime
 import urllib
 import json
 import facebook
 import math
+import pickle
 import os
 import string
 import shutil
@@ -14,24 +16,83 @@ access_token = os.getenv('ACCESS_TOKEN')
 graph = facebook.GraphAPI(access_token)
 user_id = graph.get_object("me")['id']
 songlength = commands.getoutput('mp3info -p "%%S" %s' % 'green_day.mp3')
-num_photos = int(math.floor(string.atoi(songlength) * .4))
+num_photos = int(math.floor(string.atoi(songlength) / 3.5))
 
+download = False # so we don't have to re-download photos
 download = True
-#download = False # so we don't have to re-download photos
 
+cached_buckets = True
+cached_buckets = False
 def main():
-  if download:
-    grab_photos()
+  grab_photos()
 
   print commands.getstatusoutput('./cmd.sh %s' % user_id)
 
 def grab_photos():
-  if os.path.exists(user_id):
+  if download and os.path.exists(user_id):
     shutil.rmtree(user_id)
 
   # make a directory for user's photos
-  os.mkdir(user_id)
+  if download:
+    os.mkdir(user_id)
 
+  if cached_buckets:
+    buckets = pickle.load(open('buckets.p', 'rb'))
+  else:
+    buckets = get_bucketed_photos()
+
+  #pickle.dump(buckets, open('buckets.p', 'wb'))
+  photo_objs = get_top_photos(buckets, num_photos)
+
+  i = 1
+  # dvd-slideshow can't do a numeric sort so name the files in the
+  # form: 001.jpg, 002.jpg...
+  max_digits = int(math.floor(math.log10(len(photo_objs))))
+  for photo in photo_objs:
+    digits = int(math.floor(math.log10(i)))
+    filename = '0' * (max_digits - digits) + str(i)
+    i = i + 1
+    print photo.getLink()
+    urllib.urlretrieve(photo.getSource(), '%s/%s.jpg' % (user_id, filename))
+
+def bucket(photos):
+  num_buckets = 20
+
+  photos.sort(compareTimes)
+  first_time = photos[0].getTime()
+  last_time = photos[len(photos) - 1].getTime()
+  bucket_size = ((last_time - first_time) + 1) / float(num_buckets)
+  photos.sort(compareScores)
+
+  buckets = dict([(x,[]) for x in range(num_buckets)])
+
+  for photo in photos:
+    bucket = int(math.floor((photo.getTime() - first_time)/bucket_size))
+    buckets[bucket].append(photo)
+  # for bucket_num, photos in buckets.items():
+  #  print 'bucket num %d' % bucket_num
+  #  for photo in photos:
+  #    print datetime.date.strftime(datetime.date.fromtimestamp(photo.getTime()), '%d/%m/%Y')
+
+  return buckets
+
+def get_top_photos(buckets, num_photos):
+  top_photos = []
+  i = 0
+  done = False
+  while len(top_photos) < num_photos and not done:
+    done = True
+    for bucket_num, photos in buckets.items():
+      if len(top_photos) == num_photos:
+        break
+      if i < len(photos):
+        done = False
+        top_photos.append(photos[i])
+    i = i + 1
+  top_photos.sort(compareTimes)
+  return top_photos
+
+def get_bucketed_photos():
   data = graph.get_connections("me", "photos", limit=10000)
   photos = data['data']
   photo_objs = {}
@@ -48,22 +109,7 @@ def grab_photos():
     photo = photo_objs[id]
     photo.setNumLikes(num_likes)
 
-  photo_objs = photo_objs.values()
-  photo_objs.sort(compareScores)
-  photo_objs = photo_objs[:num_photos]
-  photo_objs.sort(compareTimes)
-
-  i = 0
-  for photo in photo_objs:
-    i = i + 1
-    print photo.getLink()
-    urllib.urlretrieve(photo.getSource(), '%s/%s.jpg' % (user_id, str(i)))
-
-def compareScores(photo_a, photo_b):
-  return photo_b.getScore() - photo_a.getScore()
-
-def compareTimes(photo_a, photo_b):
-  return photo_a.getTime() - photo_b.getTime()
+  return bucket(photo_objs.values())
 
 def fql(queries):
   req_url = 'https://api.facebook.com/method/fql.multiquery'
@@ -101,4 +147,19 @@ class Photo:
 
   def getTime(self):
     return int(feed.date.rfc3339.tf_from_timestamp(self.data['created_time']))
+
+
+def compareScores(photo_a, photo_b):
+  score_a = photo_a.getScore()
+  score_b = photo_b.getScore()
+
+  # old pictures don't have comments nor likes, do this to pick photos
+  # from same album less often
+  if score_a == score_b
+    random.randint(-1,1)
+  return score_b - score_a
+
+def compareTimes(photo_a, photo_b):
+  return photo_a.getTime() - photo_b.getTime()
+
 main()

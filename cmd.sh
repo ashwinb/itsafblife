@@ -7,10 +7,16 @@ export SOUNDFILE=../green_day.mp3
 cd $1
 
 # resize, center and fill images
-for img in *.jpg
-  do convert $img -resize 720x480 -background black -gravity center -extent 720x480 $img
-done
+# for img in *.jpg
+#   do convert $img -resize 720x480 -background black -gravity center -extent 720x480 $img
+# done
 
+# even easier than mencoder, just use dvd-slideshow!
+dir2slideshow -notitle -a ${SOUNDFILE} -n slideshow -t 3.5 -c .3 .
+dvd-slideshow -f slideshow.txt
+exit
+
+#deprecated code below
 ls *.jpg | sort -n > files.txt
 
 mencoder mf://@files.txt \
