@@ -14,6 +14,9 @@ cd $1
 # even easier than mencoder, just use dvd-slideshow!
 dir2slideshow -notitle -a ${SOUNDFILE} -n slideshow -t 3.5 -c .3 .
 dvd-slideshow -f slideshow.txt
+
+# video upload
+#  ~curl 'https://api-video.facebook.com/restserver.php?method=video.upload&access_token=156562204392783|480dcfa56ff68e39feb88923-499093805|q1BrU99T7a58D3jZbCVXxDpNddQ' -F'type=multipart/message' -F 'source=@Desktop/movie.mov'
 exit
 
 #deprecated code below
